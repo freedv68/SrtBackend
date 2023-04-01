@@ -5,3 +5,21 @@ pip3 install uwsgi
 
 uwsgi 실행방법
 uwsgi --http :8000 --home /home/freedv/srtbackend --chdir /srv/SrtBackend/ -w silkroad.wsgi
+
+uwsgi.service 파일을 데몬(백그라운드에 실행)에 등록
+sudo ln -f /srv/SrtBackend/.config/uwsgi/uwsgi.service /etc/systemd/system/uwsgi.service
+
+
+» sudo systemctl daemon-reload
+
+System has not been booted with systemd as init system (PID 1). Can't operate. Failed to connect to bus: Host is down
+
+just try:
+
+sudo apt-get update && sudo apt-get install -yqq daemonize dbus-user-session fontconfig
+
+sudo daemonize /usr/bin/unshare --fork --pid --mount-proc /lib/systemd/systemd --system-unit=basic.target
+
+exec sudo nsenter -t $(pidof systemd) -a su - $LOGNAME
+
+snap version
