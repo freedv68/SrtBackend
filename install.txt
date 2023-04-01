@@ -1,3 +1,7 @@
 pip3 install djangorestframework
 pip3 install djangorestframework-simplejwt
 pip3 install django-cors-headers
+pip3 install uwsgi
+
+uwsgi 실행방법
+uwsgi --http :8000 --home /home/freedv/srtbackend --chdir /srv/SrtBackend/ -w silkroad.wsgi
