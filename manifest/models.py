@@ -1,0 +1,35 @@
+from django.db import models
+
+class Manifest(models.Model):
+    id = models.IntegerField(default=0)
+    no = models.CharField(max_length=5, default='')
+    hawbNo = models.CharField(max_length=20, primary_key=True)
+    shipper = models.TextField(default='')
+    consignee = models.TextField(default='')
+    item = models.TextField(default='')
+    ct = models.CharField(max_length=5, default='')
+    wt = models.CharField(max_length=10, default='')
+    value = models.CharField(max_length=10, default='')
+    attn = models.CharField(max_length=100, default='')
+    phoneNumber = models.CharField(max_length=100, default='')
+    pc = models.CharField(max_length=100, default='')
+    port = models.CharField(max_length=100, default='')
+    note = models.TextField(default='')
+    specialNote = models.TextField(default='')
+    charge1 = models.CharField(max_length=20, default='')
+    charge2 = models.CharField(max_length=20, default='')
+    team = models.CharField(max_length=20, default='')
+    address = models.TextField(default='')
+    insertDate = models.CharField(max_length=20)
+    modified = models.BooleanField(default=False)
+    scanned = models.BooleanField(default=False)
+    inspected = models.BooleanField(default=False)
+    canceled = models.BooleanField(default=False)
+    exclude = models.BooleanField(default=False)
+    stepped = models.BooleanField(default=False)
+    sea = models.BooleanField(default=False)
+    together = models.BooleanField(default=False)
+    scanTimes = models.IntegerField(default=0)
+
+
+
