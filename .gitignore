@@ -19,6 +19,9 @@ captures/
 *.apk
 output.json
 
+# no secrets.json
+*secrets.json
+
 # IntelliJ
 *.iml
 .idea/
