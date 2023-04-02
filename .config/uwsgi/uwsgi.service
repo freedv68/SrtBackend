@@ -3,7 +3,7 @@ Description=uWSGI service
 After=syslog.target
 
 [Service]
-ExecStart=/home/freedv/srtbackend/bin/uwsgi -i /srv/SrtBackend/.config/uwsgi/silkroad.ini
+ExecStart=/home/ubuntu/srtbackend/bin/uwsgi -i /srv/SrtBackend/.config/uwsgi/silkroad.ini
 
 Restart=always
 KillSignal=SIGQUIT
