@@ -38,6 +38,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.0.19',
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:4200',
     'http://192.168.0.19:4200',
+    'http://129.154.59.53'
 ]
 #CORS_ALLOW_CREDENTIALS = False
 
@@ -46,6 +47,7 @@ CORS_ALLOWED_ORIGINS = [
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:4200',
     'http://192.168.0.19:4200',
+    'http://129.154.59.53'
 ]
 
 # REST_FRAMEWORK
