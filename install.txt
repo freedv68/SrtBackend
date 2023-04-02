@@ -30,3 +30,4 @@ snap version
 
 sudo cp -f /srv/SrtBackend/.config/nginx/silkroad.conf /etc/nginx/sites-available/silkroad.conf
 sudo ln -sf /etc/nginx/sites-available/silkroad.conf /etc/nginx/sites-enabled/silkroad.conf
+sudo systemctl restart nginx
