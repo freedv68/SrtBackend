@@ -106,9 +106,6 @@ $RECYCLE.BIN/
 # Files for the ART/Dalvik VM
 *.dex
 
-# sqlite
-db.sqlite3
-
 # Java class files
 
 # Generated files
