@@ -54,7 +54,6 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:4200',
     'http://192.168.0.19:4200',
     'http://129.154.59.53',
-    'http://129.154.59.53:13890',
     'http://localhost'
 ]
 #CORS_ALLOW_CREDENTIALS = False
@@ -65,7 +64,6 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:4200',
     'http://192.168.0.19:4200',
     'http://129.154.59.53',
-    'http://129.154.59.53:13890',
 ]
 
 # REST_FRAMEWORK
