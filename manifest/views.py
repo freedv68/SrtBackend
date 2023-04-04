@@ -198,7 +198,7 @@ class ManifestViewSet(viewsets.ModelViewSet):
                 return JsonResponse(status=201, data={'status': 'Created'}, safe=False)
                 
             except Exception as ex:
-                return JsonResponse(status=201, data={'status': f'Bad Request - {ex}'}, safe=False)
+                return JsonResponse(status=400, data={'status': f'Bad Request - {ex}'}, safe=False)
 
         else:
             try:
@@ -264,7 +264,7 @@ class ManifestViewSet(viewsets.ModelViewSet):
                 return JsonResponse(status=201, data={'status': 'Updated'}, safe=False)
 
             except Exception as ex:
-                return JsonResponse(status=201, data={'status': f'Bad Request - {ex}'}, safe=False)
+                return JsonResponse(status=400, data={'status': f'Bad Request - {ex}'}, safe=False)
 
         else:
             try:
@@ -357,7 +357,22 @@ class ManifestHawbNoViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
+    def create(self, request, *args, **kwargs):
+        try:
+            hawb_list = []
+            for h in request.data:
+                hawb_list.append(h["hawbNo"])
+
+            manifestHawbNo = Manifest.objects.filter(hawbNo__in=hawb_list).order_by('insertDate', 'id')
+            serializer = ManifestHawbNoSerializer(manifestHawbNo, many=True)
+            return Response(serializer.data)
+            
+        except Exception as ex:
+            return JsonResponse(status=400, data={'status': f'Bad Request - {ex}'}, safe=False)
+
+
     def get_queryset(self):
+
         hawb_nos = self.request.query_params.get("hawb_nos", None)
         if hawb_nos is not None:
             hawb_objs = json.loads(hawb_nos)
