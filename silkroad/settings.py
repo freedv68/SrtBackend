@@ -78,8 +78,8 @@ REST_FRAMEWORK = {
 #AUTH_USER_MODEL = "accounts.UserAccount"  # 커스텀 유저 모델 사용
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=4),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=15),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=4), #4
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=15),  # 15
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': False,
@@ -123,7 +123,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'manifest',
-    'accounts'
+    'accounts',
+    'bags'
 ]
 
 MIDDLEWARE = [

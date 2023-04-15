@@ -11,10 +11,10 @@ from django.shortcuts import get_object_or_404
 from manifest.models import Manifest
 from manifest.permissions import IsOwnerOrReadOnly
 from manifest.serializers import ManifestSerializer, ManifestHawbNoSerializer, ManifestPortSerializer, ManifestTeamSerializer, ManifestInsertDateSerializer
+from datetime import date, datetime, timedelta
 import threading
 
 lock = threading.Lock()  # threading에서 Lock 함수 가져오기
-
 
 class ManifestViewSet(viewsets.ModelViewSet):
     queryset = Manifest.objects.all()
@@ -22,41 +22,6 @@ class ManifestViewSet(viewsets.ModelViewSet):
 
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [JWTAuthentication]
-
-    """
-    def get_queryset(self):
-        print("queryset")
-        hawb_no = self.request.query_params.get("hawb_no", None)
-        page = self.request.query_params.get("page", 1)
-        page_size = self.request.query_params.get("page_size", 20)
-        item_count = self.request.query_params.get("count", None)
-
-        limit = int(page_size) * int(page)
-        offset = int(limit) - int(page_size)
-
-        if hawb_no is not None:
-            if item_count is not None:
-                itemCount = queryset.count()
-                #return JsonResponse(status=200, data=itemCount, safe=False)
-            else:
-                return Manifest.objects.filter(hawbNo=hawb_no)[offset:limit]
-
-        from_insert_date = self.request.query_params.get(
-            "from_insert_date", None)
-        to_insert_date = self.request.query_params.get("to_insert_date", None)
-
-        if item_count is not None:
-            itemCount = Manifest.objects.filter(Q(insertDate__gte=from_insert_date) & Q(
-                insertDate__lte=to_insert_date)).order_by('insertDate', 'id').count()
-            
-            return JsonResponse(status=200, data={'status': itemCount}, safe=False)
-        else:
-            if from_insert_date is not None and to_insert_date is not None:
-                return Manifest.objects.filter(Q(insertDate__gte=from_insert_date) & Q(
-                    insertDate__lte=to_insert_date)).order_by('insertDate', 'id')[offset:limit]    
-
-        #return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
-    """
 
     def list(self, request):
         q_objects = []
@@ -81,6 +46,11 @@ class ManifestViewSet(viewsets.ModelViewSet):
             insertDate__lte=to_insert_date)
 
         if keyword is not None:
+            date_time_obj = datetime.strptime(
+                from_insert_date, '%Y-%m-%d') - timedelta(7)
+            from_date = date_time_obj.strftime('%Y-%m-%d')
+            q_objects = Q(insertDate__gte=from_date) & Q(
+                insertDate__lte=to_insert_date)
             q_objects &= Q(hawbNo__icontains=keyword) | Q(
                 shipper__icontains=keyword) | Q(consignee__icontains=keyword) | Q(attn__icontains=keyword) | Q(phoneNumber__icontains=keyword)
         else:
@@ -347,8 +317,6 @@ class ManifestViewSet(viewsets.ModelViewSet):
             return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
 
 
-# Port 수입지역 목록 블러오기
-
 
 class ManifestHawbNoViewSet(viewsets.ModelViewSet):
     queryset = Manifest.objects.all()
@@ -447,7 +415,7 @@ class ManifestTeamViewSet(viewsets.ModelViewSet):
             insertDate__lte=to_insert_date)
 
         if group == "team":
-            return Manifest.objects.filter(q_objects).values("team").annotate(Count('team'))
+            return Manifest.objects.filter(q_objects).values("team").annotate(count=Count('team'))
 
         return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
 

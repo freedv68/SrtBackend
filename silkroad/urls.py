@@ -20,6 +20,6 @@ urlpatterns = [
     re_path(r'^admin/', admin.site.urls),
     path('', include('manifest.urls')),
     path('', include('accounts.urls')),
-
+    path('', include('bags.urls'))
     #re_path(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     ]
