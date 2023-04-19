@@ -124,7 +124,7 @@ class ManifestViewSet(viewsets.ModelViewSet):
                 q_objects &= q_objects_ex
 
         queryset = Manifest.objects.filter(
-            q_objects).order_by('insertDate', 'id')
+            q_objects).order_by('-insertDate', 'id')
         itemCount = queryset.count()
 
         if itemCount == 0 or page_s is None or page_size_s is None:

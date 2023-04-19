@@ -40,6 +40,14 @@ class BagDateViewSet(viewsets.ModelViewSet):
 
         return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
 
+    def destroy(self, request, *args, **kwargs):
+        try:
+            queryset = BagDate.objects.filter(pk=kwargs['pk'])
+            queryset.delete()
+            return JsonResponse(status=204, data={'status': 'Deleted'}, safe=False)
+        except Exception as ex:
+            return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
+
 
 class BagPortViewSet(viewsets.ModelViewSet):
     queryset = BagPort.objects.all()
@@ -68,6 +76,14 @@ class BagPortViewSet(viewsets.ModelViewSet):
             BagPort.objects.create(bagDate=BagDate.objects.get(
                 pk=request.data['bagDate']), bagPort=request.data['bagPort'])
             return JsonResponse(status=201, data={'status': 'Created'}, safe=False)
+        except Exception as ex:
+            return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            queryset = BagPort.objects.filter(pk=kwargs['pk'])
+            queryset.delete()
+            return JsonResponse(status=204, data={'status': 'Deleted'}, safe=False)
         except Exception as ex:
             return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
 
@@ -100,6 +116,14 @@ class BagNumberViewSet(viewsets.ModelViewSet):
         except Exception as ex:
             return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
 
+    def destroy(self, request, *args, **kwargs):
+        try:
+            queryset = BagNumber.objects.filter(pk=kwargs['pk'])
+            queryset.delete()
+            return JsonResponse(status=204, data={'status': 'Deleted'}, safe=False)
+        except Exception as ex:
+            return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
+
 
 class BagHawbNoViewSet(viewsets.ModelViewSet):
     queryset = BagHawbNo.objects.all()
@@ -122,6 +146,17 @@ class BagHawbNoViewSet(viewsets.ModelViewSet):
         except Exception as ex:
             return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
 
+    def update(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            bagHawbNo = get_object_or_404(BagHawbNo, id=kwargs['pk'])
+            setattr(bagHawbNo, "bagNumber", BagNumber.objects.get(
+                pk=data['bagNumber']))
+            bagHawbNo.save()
+            return JsonResponse(status=200, data={'status': 'Updated'}, safe=False)
+        except Exception as ex:
+            return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
+
     def partial_update(self, request, *args, **kwargs):
         try:
             bagHawbNo = get_object_or_404(BagHawbNo, id=kwargs['pk'])
@@ -130,7 +165,6 @@ class BagHawbNoViewSet(viewsets.ModelViewSet):
             return JsonResponse(status=200, data={'status': 'Updated'}, safe=False)
         except Exception as ex:
             return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
-
 
     def destroy(self, request, *args, **kwargs):
         try:
