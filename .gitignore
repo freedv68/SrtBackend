@@ -23,6 +23,8 @@ media
 # C extensions
 *.so
 
+secrets.json
+
 # Distribution / packaging
 .Python
 build/
