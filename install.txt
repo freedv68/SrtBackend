@@ -36,6 +36,7 @@ sudo systemctl daemon-reload
 sudo systemctl restart nginx uwsgi
 
 
+DEBUG = False  #in settings.py
 
 cd /srv/SrtBackend
 git pull origin master

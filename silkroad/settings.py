@@ -48,7 +48,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.0.19',
 
 # CORS
 
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_ALLOW_ALL = False
 """
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:4200',
