@@ -50,7 +50,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.0.19',
 
 CORS_ORIGIN_ALLOW_ALL = False
 
-
+"""
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:4200',
     'http://192.168.0.19:4200',
@@ -58,7 +58,7 @@ CORS_ALLOWED_ORIGINS = [
     'http://129.154.59.53:13890',
     'http://localhost'
 ]
-
+"""
 #CORS_ALLOW_CREDENTIALS = False
 
 # CSRF
