@@ -30,6 +30,7 @@ class Manifest(models.Model):
     sea = models.BooleanField(default=False)
     together = models.BooleanField(default=False)
     scanTimes = models.IntegerField(default=0)
+    deliveryComplete = models.BooleanField(default=False)
 
 
 

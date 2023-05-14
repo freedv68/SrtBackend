@@ -8,7 +8,7 @@ class ManifestSerializer(serializers.ModelSerializer):
             'value', 'attn', 'phoneNumber', 'pc', 'port', 'note', 
             'specialNote', 'charge1', 'charge2', 'team', 'address', 
             'insertDate', 'modified', 'scanned', 'inspected', 'canceled', 'exclude',
-                  'stepped', 'sea', 'together', 'scanTimes')
+                  'stepped', 'sea', 'together', 'scanTimes', 'deliveryComplete')
     
 
 class ManifestHawbNoSerializer(serializers.ModelSerializer):
@@ -17,6 +17,11 @@ class ManifestHawbNoSerializer(serializers.ModelSerializer):
         fields = ('hawbNo',)
 
 
+class ManifestAssignmentTeamsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Manifest
+        fields = ('hawbNo', 'team')
+        
 class ManifestPortSerializer(serializers.ModelSerializer):
     class Meta:
         model = Manifest

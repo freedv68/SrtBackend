@@ -15,10 +15,18 @@ class BagNumber(models.Model):
     bagPort = models.ForeignKey(
         "BagPort", on_delete=models.CASCADE, related_name='bagnumber')
     bagNumber = models.IntegerField(default=0)
+    bagComment = models.CharField(max_length=20, default='')
 
 class BagHawbNo(models.Model):
     id = models.BigAutoField(primary_key=True)
     bagNumber = models.ForeignKey(
         "BagNumber", on_delete=models.CASCADE, related_name='baghawbno')
+    bagHawbNo = models.CharField(max_length=20, unique=True)
+    checked = models.BooleanField(default=False)
+
+class BagCheckHawbNo(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    bagPort = models.ForeignKey(
+        "BagPort", on_delete=models.CASCADE, related_name='bagcheckhawbno')    
     bagHawbNo = models.CharField(max_length=20, unique=True)
     checked = models.BooleanField(default=False)

@@ -1,17 +1,13 @@
 import json
-from django.http import JsonResponse, HttpResponse
-from django.contrib.auth.models import User
-from rest_framework import permissions, renderers, viewsets
-from rest_framework.decorators import action
+from django.http import JsonResponse
+from rest_framework import permissions, viewsets
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.db.models import Q
-from django.db.models import Count
+from django.db.models import Q, Count
 from django.shortcuts import get_object_or_404
 from manifest.models import Manifest
-from manifest.permissions import IsOwnerOrReadOnly
 from manifest.serializers import ManifestSerializer, ManifestHawbNoSerializer, ManifestPortSerializer, ManifestTeamSerializer, ManifestInsertDateSerializer
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 import threading
 
 lock = threading.Lock()  # threading에서 Lock 함수 가져오기
@@ -40,7 +36,7 @@ class ManifestViewSet(viewsets.ModelViewSet):
         page_size = int(self.request.query_params.get("page_size", 15))
 
         if from_insert_date is None or to_insert_date is None:
-            return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
+            return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
 
         q_objects = Q(insertDate__gte=from_insert_date) & Q(
             insertDate__lte=to_insert_date)
@@ -64,6 +60,7 @@ class ManifestViewSet(viewsets.ModelViewSet):
             stepped = self.request.query_params.get("stepped", "false")
             sea = self.request.query_params.get("sea", "false")
             together = self.request.query_params.get("together", "false")
+            deliveryComplete = self.request.query_params.get("deliveryComplete", "false")
 
             if partner is not None and partner != '전체':
                 if partner == '실크로드':
@@ -119,6 +116,11 @@ class ManifestViewSet(viewsets.ModelViewSet):
                     q_objects_ex = Q(together=True)
                 else:
                     q_objects_ex |= Q(together=True)
+            if deliveryComplete == "true":
+                if q_objects_ex == []:
+                    q_objects_ex = Q(deliveryComplete=True)
+                else:
+                    q_objects_ex |= Q(deliveryComplete=True)
 
             if q_objects_ex != []:
                 q_objects &= q_objects_ex
@@ -159,16 +161,16 @@ class ManifestViewSet(viewsets.ModelViewSet):
                                         charge1=m['charge1'], charge2=m['charge2'], team=m['team'], 
                                         address=m['address'], insertDate=m['insertDate'], modified=m['modified'], 
                                         scanned=m['scanned'], inspected=m['inspected'], canceled=m['canceled'], exclude=m['exclude'],
-                                        stepped=m['stepped'], sea=m['sea'], together=m['together'], scanTimes=m['scanTimes'])
+                                        stepped=m['stepped'], sea=m['sea'], together=m['together'], scanTimes=m['scanTimes'], deliveryComplete=m['deliveryComplete'])
 
                     mani_objs.append(mani_obj)
 
                 Manifest.objects.bulk_create(mani_objs)
 
-                return JsonResponse(status=201, data={'status': 'Created'}, safe=False)
+                return JsonResponse(status=201, data={'code': 201, 'message': 'Created'}, safe=False)
                 
             except Exception as ex:
-                return JsonResponse(status=400, data={'status': f'Bad Request - {ex}'}, safe=False)
+                return JsonResponse(status=400, data={'code': 400, 'message': f'Bad Request - {ex}'}, safe=False)
 
         else:
             try:
@@ -181,7 +183,7 @@ class ManifestViewSet(viewsets.ModelViewSet):
 
                 if created:
                     lock.release()
-                    return JsonResponse(status=201, data={'status': 'Created'}, safe=False)
+                    return JsonResponse(status=201, data={'code': 201, 'message': 'Created'}, safe=False)
                 else:
                     setattr(manifest, 'no', data['no'])
                     setattr(manifest, 'shipper', data['shipper'])
@@ -203,12 +205,12 @@ class ManifestViewSet(viewsets.ModelViewSet):
 
                     manifest.save()
                     lock.release()
-                    return JsonResponse(status=200, data={'status': 'Updated'}, safe=False)
+                    return JsonResponse(status=200, data={'code': 200, 'message': 'Updated'}, safe=False)
 
             except Exception as ex:
                 if lock.locked():
                     lock.release()
-                return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
+                return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
 
 
     def update(self, request, *args, **kwargs):
@@ -224,26 +226,31 @@ class ManifestViewSet(viewsets.ModelViewSet):
                                         charge1=m['charge1'], charge2=m['charge2'], team=m['team'],
                                         address=m['address'], insertDate=m['insertDate'], modified=m['modified'],
                                         scanned=m['scanned'], inspected=m['inspected'], canceled=m['canceled'], exclude=m['exclude'],
-                                        stepped=m['stepped'], sea=m['sea'], together=m['together'], scanTimes=m['scanTimes'])
+                                        stepped=m['stepped'], sea=m['sea'], together=m['together'], scanTimes=m['scanTimes'], delievryComplete=m['deliveryComplete'])
 
                     mani_objs.append(mani_obj)
 
                 Manifest.objects.bulk_update(
                     mani_objs, fields=['no', 'shipper', 'consignee', 'item', 'ct', 'wt', 'value', 'attn', 'phoneNumber',
                                        'pc', 'port', 'note', 'specialNote', 'charge1', 'charge2', 'team', 'address'])
-                return JsonResponse(status=201, data={'status': 'Updated'}, safe=False)
+                return JsonResponse(status=201, data={'code': 201, 'message': 'Updated'}, safe=False)
 
             except Exception as ex:
-                return JsonResponse(status=400, data={'status': f'Bad Request - {ex}'}, safe=False)
+                return JsonResponse(status=400, data={'code': 400, 'message': f'Bad Request - {ex}'}, safe=False)
 
         else:
             try:
-                lock.acquire()
-
                 data = json.loads(request.body)
-                manifest = get_object_or_404(Manifest, hawbNo=data['hawbNo'])
-
+                
+                if kwargs['pk'] != data['hawbNo']:
+                    mani = Manifest.objects.filter(hawbNo=data['hawbNo']).first()
+                    if (mani):
+                        return JsonResponse(status=409, data={'code': 409, 'message': '이미 있는 비엘번호입니다.'}, safe=False)
+                    
+                lock.acquire()
+                manifest = get_object_or_404(Manifest, hawbNo=kwargs['pk'])
                 setattr(manifest, 'no', data['no'])
+                setattr(manifest, 'hawbNo', data['hawbNo'])
                 setattr(manifest, 'shipper', data['shipper'])
                 setattr(manifest, 'consignee', data['consignee'])
                 setattr(manifest, 'item', data['item'])
@@ -262,7 +269,7 @@ class ManifestViewSet(viewsets.ModelViewSet):
                 setattr(manifest, 'address', data['address'])
                 """
                 setattr(manifest, 'scanned', data['scanned'])
-                setattr(manifest, 'inspected', data['inspected'])
+                setattr(manifest, 'inspcected', data['inspected'])
                 setattr(manifest, 'canceled', data['canceled'])
                 setattr(manifest, 'exclude', data['exclude'])
                 setattr(manifest, 'stepped', data['stepped'])
@@ -271,13 +278,18 @@ class ManifestViewSet(viewsets.ModelViewSet):
                 setattr(manifest, 'scanTimes', data['scanTimes'])
                 """
                 manifest.save()
+                
+                if kwargs['pk'] != data['hawbNo']: #비엘 번호가 변경되는 경우는 새로 추가가 되기때문에 기존 자료를 삭제
+                    queryset = Manifest.objects.filter(hawbNo=kwargs['pk'])
+                    queryset.delete()
+                    
                 lock.release()
-                return JsonResponse(status=200, data={'status': 'Updated'}, safe=False)
+                return JsonResponse(status=200, data={'code': 200, 'message': 'Updated'}, safe=False)
 
             except Exception as ex:
                 if lock.locked():
                     lock.release()
-                return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
+                return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
 
     def partial_update(self, request, *args, **kwargs):
         try:
@@ -292,9 +304,9 @@ class ManifestViewSet(viewsets.ModelViewSet):
                 setattr(manifest, field1, value1)
 
             manifest.save()
-            return JsonResponse(status=200, data={'status': 'Updated'}, safe=False)
+            return JsonResponse(status=200, data={'code': 200, 'message': 'Updated'}, safe=False)
         except Exception as ex:
-            return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
+            return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
 
 
     def destroy(self, request, *args, **kwargs):
@@ -312,12 +324,35 @@ class ManifestViewSet(viewsets.ModelViewSet):
 
         try:
             queryset.delete()
-            return JsonResponse(status=204, data={'status': 'Deleted'}, safe=False)
+            return JsonResponse(status=204, data={'code': 204, 'message': 'Deleted'}, safe=False)
         except Exception as ex:
-            return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
+            return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
 
 
 
+class ManifestAssignmentTeamsViewSet(viewsets.ModelViewSet):
+    queryset = Manifest.objects.all()
+    
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+        
+    def create(self, request, *args, **kwargs):
+        try:
+            hawb_list = []
+            for h in request.data:
+                q_object = Q(shipper=h["shipper"])
+                q_object &= Q(consignee=h["consignee"])
+                try:
+                    mani = Manifest.objects.filter(q_object).annotate(teamCount=Count('team')).latest('teamCount')
+                    hawb_list.append({'hawbNo': h["hawbNo"], 'team': mani.team})
+                except Manifest.DoesNotExist:
+                    hawb_list.append({'hawbNo': h["hawbNo"], 'team': ''})
+                    
+            return Response(status=200, data=hawb_list)
+        
+        except Exception as ex:
+            return JsonResponse(status=400, data={'code': 400, 'message': f'Bad Request - {ex}'}, safe=False)
+        
 class ManifestHawbNoViewSet(viewsets.ModelViewSet):
     queryset = Manifest.objects.all()
     serializer_class = ManifestHawbNoSerializer
@@ -333,10 +368,10 @@ class ManifestHawbNoViewSet(viewsets.ModelViewSet):
 
             manifestHawbNo = Manifest.objects.filter(hawbNo__in=hawb_list).order_by('insertDate', 'id')
             serializer = ManifestHawbNoSerializer(manifestHawbNo, many=True)
-            return Response(serializer.data)
+            return Response(status=200, data=serializer.data)
             
         except Exception as ex:
-            return JsonResponse(status=400, data={'status': f'Bad Request - {ex}'}, safe=False)
+            return JsonResponse(status=400, data={'code': 400, 'message': f'Bad Request - {ex}'}, safe=False)
 
 
     def get_queryset(self):
@@ -350,7 +385,7 @@ class ManifestHawbNoViewSet(viewsets.ModelViewSet):
 
             return Manifest.objects.filter(hawbNo__in=hawb_list).order_by('insertDate', 'id')
 
-        return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
+        return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
 
     def partial_update(self, request, *args, **kwargs):
         try:
@@ -365,9 +400,9 @@ class ManifestHawbNoViewSet(viewsets.ModelViewSet):
 
                 manifest.save()
 
-            return JsonResponse(status=200, data={'status': 'Updated'}, safe=False)
+            return JsonResponse(status=200, data={'code': 200, 'message': 'Updated'}, safe=False)
         except Exception as ex:
-            return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
+            return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
 
 
 # Port 수입지역 목록 블러오기
@@ -384,7 +419,7 @@ class ManifestPortViewSet(viewsets.ModelViewSet):
         to_insert_date = self.request.query_params.get("e_date", None)
 
         if from_insert_date is None or to_insert_date is None:
-            return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
+            return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
 
         q_objects = Q(insertDate__gte=from_insert_date) & Q(
             insertDate__lte=to_insert_date)
@@ -392,7 +427,7 @@ class ManifestPortViewSet(viewsets.ModelViewSet):
         if group == "port":
             return Manifest.objects.filter(q_objects).values("port").annotate(Count('port'))
 
-        return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
+        return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
 
 
 # Team 배송팀 목록 불러오기
@@ -409,7 +444,7 @@ class ManifestTeamViewSet(viewsets.ModelViewSet):
         to_insert_date = self.request.query_params.get("e_date", None)
 
         if from_insert_date is None or to_insert_date is None:
-            return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
+            return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
 
         q_objects = Q(insertDate__gte=from_insert_date) & Q(
             insertDate__lte=to_insert_date)
@@ -417,7 +452,7 @@ class ManifestTeamViewSet(viewsets.ModelViewSet):
         if group == "team":
             return Manifest.objects.filter(q_objects).values("team").annotate(count=Count('team'))
 
-        return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
+        return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
 
 
 class ManifestInsertDateViewSet(viewsets.ModelViewSet):
@@ -431,6 +466,6 @@ class ManifestInsertDateViewSet(viewsets.ModelViewSet):
         group = self.request.query_params.get("group", None)
 
         if group == "insert_date":
-            return Manifest.objects.values("insertDate").annotate(Count('insertDate')).order_by("-insertDate")
+            return Manifest.objects.values("insertDate").annotate(Count('insertDate')).order_by("-insertDate")[:30]
 
-        return JsonResponse(status=400, data={'status': 'Bad Request'}, safe=False)
+        return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)

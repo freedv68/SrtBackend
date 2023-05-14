@@ -1,22 +1,13 @@
-from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions
 from rest_framework import status
-from django.contrib.auth import authenticate, login, logout
 
-from accounts.serializers import UserSerializer
-
-from rest_framework.permissions import IsAuthenticated
-
-from rest_framework.exceptions import AuthenticationFailed
-
-from accounts.jwt_claim_serializer import CustomTokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
+from accounts.jwt_claim_serializer import CustomTokenObtainPairSerializer, CustomTokenRefreshSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
-from silkroad import settings
-from rest_framework import authentication
+
 # TokenObtainPairView : urls.py에서 import했고, 토큰을 발급받기 위해 사용
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -24,9 +15,16 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     permission_classes = [permissions.AllowAny]
     serializer_class = CustomTokenObtainPairSerializer
 
+class CustomTokenRefreshView(TokenRefreshView):
+    """
+    Custom Refresh token View
+    """
+    serializer_class = CustomTokenRefreshSerializer
+    
+    
 
 class LogoutView(APIView):
-    permission_classes = (IsAuthenticated,)
+    permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [JWTAuthentication]
 
     def post(self, request):
@@ -35,11 +33,13 @@ class LogoutView(APIView):
             token = RefreshToken(refresh_token)
             token.blacklist()
 
-            return Response(status=status.HTTP_205_RESET_CONTENT)
+            return Response(status=status.HTTP_200_OK, data={'code': 200, 'message': 'Successful Logout'})
         except Exception as e:
             print(e)
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_400_BAD_REQUEST, data={'code': 400, 'message': 'Failed Logout'})
 
+
+            
 """
 class UserView(APIView):
 

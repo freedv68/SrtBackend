@@ -1,6 +1,8 @@
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-
-
+from django.forms import ValidationError
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+from rest_framework_simplejwt.state import token_backend
+from django.contrib.auth.models import User
+from helper.helper import get_or_none
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
     @classmethod
@@ -18,7 +20,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
     # response 커스텀
     default_error_messages = {
-        'no_active_account': {'message': 'username or password is incorrect!',
+        'no_active_account': {'message': 'Username or Password is incorrect!',
                               'success': False,
                               'status': 401}
     }
@@ -39,3 +41,18 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['success'] = True
 
         return data
+
+
+class CustomTokenRefreshSerializer(TokenRefreshSerializer):
+    def validate(self, attrs):
+        data = super(CustomTokenRefreshSerializer, self).validate(attrs)
+        decoded_payload = token_backend.decode(data['access'], verify=True)
+        user_uid=decoded_payload['user_id']
+        
+        user=get_or_none(User, id=user_uid)
+        if user is not None:
+            # add filter query
+            #data.update({'custom_field': 'custom_data')})
+            return data
+        else:
+            raise ValidationError("user not exist")

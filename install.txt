@@ -34,3 +34,8 @@ sudo cp -f /srv/SrtBackend/.config/nginx/silkroad.conf /etc/nginx/sites-availabl
 sudo ln -sf /etc/nginx/sites-available/silkroad.conf /etc/nginx/sites-enabled/silkroad.conf
 sudo systemctl daemon-reload
 sudo systemctl restart nginx uwsgi
+
+
+
+cd /srv/SrtBackend
+git pull origin master
