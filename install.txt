@@ -39,3 +39,7 @@ sudo systemctl restart nginx uwsgi
 
 cd /srv/SrtBackend
 git pull origin master
+cd ~
+source ~/srtbackend/bin/activate #가상환경 활성화
+python3 manage.py makemigrations
+python3 manage.py migrate
