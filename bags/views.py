@@ -240,21 +240,35 @@ class BagHawbNoViewSet(viewsets.ModelViewSet):
                         checked = True
                     else:
                         message = f'다른 지역({checkHawbNo.bagPort.bagPort})으로 배정된 아이템입니다.'
-                        lock.release()
+                        if lock.locked():
+                            lock.release()
                         return JsonResponse(status=400, data={'code': 400, 'message': message}, safe=False)
 
-                bagHawbNo, created = BagHawbNo.objects.get_or_create(bagHawbNo=request.data['bagHawbNo'],
-                                                                    defaults={"bagNumber": BagNumber.objects.get(pk=request.data['bagNumberId']), "bagHawbNo": request.data['bagHawbNo'], "checked": checked})
+                bagHawbNoString = request.data['bagHawbNo']
+                print("bagHawbNoString: " + bagHawbNoString)
+                if request.data['addType'] == 1:
+                    hawbNoCount = BagHawbNo.objects.filter(bagHawbNo__contains=request.data['bagHawbNo']).count()
+                    bagHawbNoString = bagHawbNoString + "-" + f'{hawbNoCount + 1}'
+
+                bagHawbNo, created = BagHawbNo.objects.get_or_create(bagHawbNo=bagHawbNoString,
+                                                                    defaults={"bagNumber": BagNumber.objects.get(pk=request.data['bagNumberId']), "bagHawbNo": bagHawbNoString, "checked": checked})
                 if created:
                     code = 201
                     message = "Created"
                 else:
+                    message = f'{bagHawbNo.id}'
+                    if lock.locked():
+                        lock.release()
+                    return JsonResponse(status=409, data={'code': 409, 'message': message}, safe=False)
+
+                    """
                     setattr(bagHawbNo, 'bagNumber', BagNumber.objects.get(
                         pk=request.data['bagNumberId']))
                     setattr(bagHawbNo, 'checked', checked)
                     bagHawbNo.save()
-
-                lock.release()
+                    """
+                if lock.locked():
+                    lock.release()
                 return JsonResponse(status=code, data={'code': code, 'message': 'message'}, safe=False)
         except Exception as ex:
             if lock.locked():
@@ -264,9 +278,22 @@ class BagHawbNoViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         try:
             data = json.loads(request.body)
+            checked = False
+            checkHawbNo = BagCheckHawbNo.objects.filter(bagHawbNo=request.data['bagHawbNo']).first()
+            if checkHawbNo is not None:
+                if checkHawbNo.bagPort == BagPort.objects.get(pk=request.data['bagPortId']):
+                    setattr(checkHawbNo, 'checked', True)
+                    checkHawbNo.save()
+                    checked = True
+                else:
+                    message = f'다른 지역({checkHawbNo.bagPort.bagPort})으로 배정된 아이템입니다.'
+                    lock.release()
+                    return JsonResponse(status=400, data={'code': 400, 'message': message}, safe=False)
+
             bagHawbNo = get_object_or_404(BagHawbNo, id=kwargs['pk'])
             setattr(bagHawbNo, "bagNumber", BagNumber.objects.get(
                 pk=data['bagNumberId']))
+            setattr(bagHawbNo, 'checked', checked)
             bagHawbNo.save()
             return JsonResponse(status=200, data={'code': 200, 'message': 'Updated'}, safe=False)
         except Exception as ex:
