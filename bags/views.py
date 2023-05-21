@@ -1,3 +1,4 @@
+import traceback
 from django.http import JsonResponse
 from rest_framework import viewsets
 from bags.models import BagDate, BagPort, BagNumber, BagHawbNo, BagCheckHawbNo
@@ -43,7 +44,7 @@ class BagDateViewSet(viewsets.ModelViewSet):
             if serializer.is_valid():
                 bag_date = serializer.save()
 
-                port_ = ["YNT", "TAO", "WEH", "SHA", "CAN", "SGN", "CGK"]
+                port_ = ["YNT", "TAO", "TAO-1", "WEH", "SHA", "CAN", "SGN", "CGK"]
                 for port in port_:
                     BagPort.objects.create(bagDate=bag_date, bagPort=port)
 
@@ -173,7 +174,7 @@ class BagNumberViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 hawbNos = BagHawbNo.objects.filter(bagNumber=BagNumber.objects.get(pk=kwargs['pk']))
                 for check in hawbNos:
-                    checkHawbNo = BagCheckHawbNo.objects.filter(bagHawbNo=check.bagHawbNo).first()
+                    checkHawbNo = BagCheckHawbNo.objects.filter(Q(bagHawbNo=check.bagHawbNo) & Q(checked=True)).first()
                     if checkHawbNo is not None:
                         setattr(checkHawbNo, 'checked', False)
                         checkHawbNo.save()
@@ -229,50 +230,48 @@ class BagHawbNoViewSet(viewsets.ModelViewSet):
         try:
             lock.acquire()
             with transaction.atomic():
-                code = 200
-                message = "Updated"
+                code = 201
+                message = "Created"
                 checked = False
                 checkHawbNo = BagCheckHawbNo.objects.filter(bagHawbNo=request.data['bagHawbNo']).first()
                 if checkHawbNo is not None:
-                    if checkHawbNo.bagPort == BagPort.objects.get(pk=request.data['bagPortId']):
-                        setattr(checkHawbNo, 'checked', True)
-                        checkHawbNo.save()
-                        checked = True
-                    else:
+                    if checkHawbNo.bagPort != BagPort.objects.get(pk=request.data['bagPortId']):
                         message = f'다른 지역({checkHawbNo.bagPort.bagPort})으로 배정된 아이템입니다.'
                         if lock.locked():
                             lock.release()
                         return JsonResponse(status=400, data={'code': 400, 'message': message}, safe=False)
 
-                bagHawbNoString = request.data['bagHawbNo']
-                print("bagHawbNoString: " + bagHawbNoString)
-                if request.data['addType'] == 1:
-                    hawbNoCount = BagHawbNo.objects.filter(bagHawbNo__contains=request.data['bagHawbNo']).count()
-                    bagHawbNoString = bagHawbNoString + "-" + f'{hawbNoCount + 1}'
+                if request.data['addType'] == 0:
+                    bagHawbNos = BagHawbNo.objects.filter(bagHawbNo__contains=request.data['bagHawbNo'])
+                    messages = ""
+                    for bagHawbNo in bagHawbNos:
+                        if messages != "":
+                            messages += ","
+                        messages += f'{bagHawbNo.id}:{bagHawbNo.bagNumber.bagNumber}:{bagHawbNo.bagNumber.bagPort.id}:{bagHawbNo.bagNumber.bagPort.bagPort}'
+                        
+                    if messages != "":
+                        if lock.locked():
+                            lock.release()
+                        return JsonResponse(status=409, data={'code': 409, 'message': messages}, safe=False)
 
-                bagHawbNo, created = BagHawbNo.objects.get_or_create(bagHawbNo=bagHawbNoString,
-                                                                    defaults={"bagNumber": BagNumber.objects.get(pk=request.data['bagNumberId']), "bagHawbNo": bagHawbNoString, "checked": checked})
-                if created:
-                    code = 201
-                    message = "Created"
-                else:
-                    message = f'{bagHawbNo.id}'
-                    if lock.locked():
-                        lock.release()
-                    return JsonResponse(status=409, data={'code': 409, 'message': message}, safe=False)
+                checkHawbNo = BagCheckHawbNo.objects.filter(Q(bagHawbNo=request.data['bagHawbNo']) & Q(checked=False)).first()
+                if checkHawbNo is not None:
+                    checked = True
+                    setattr(checkHawbNo, 'checked', checked)
+                    checkHawbNo.save()
+                                                                                    
+                BagHawbNo.objects.create(bagNumber = BagNumber.objects.get(pk=request.data['bagNumberId']), bagHawbNo = request.data['bagHawbNo'], checked = checked)
 
-                    """
-                    setattr(bagHawbNo, 'bagNumber', BagNumber.objects.get(
-                        pk=request.data['bagNumberId']))
-                    setattr(bagHawbNo, 'checked', checked)
-                    bagHawbNo.save()
-                    """
                 if lock.locked():
                     lock.release()
                 return JsonResponse(status=code, data={'code': code, 'message': 'message'}, safe=False)
         except Exception as ex:
             if lock.locked():
                 lock.release()
+                
+            message = traceback.format_exc()
+            print(message)
+    
             return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
 
     def update(self, request, *args, **kwargs):
@@ -312,7 +311,7 @@ class BagHawbNoViewSet(viewsets.ModelViewSet):
         try:
             with transaction.atomic():
                 bagHawbNo = get_object_or_404(BagHawbNo, id=kwargs['pk'])
-                checkHawbNo = BagCheckHawbNo.objects.filter(bagHawbNo=bagHawbNo.bagHawbNo).first()
+                checkHawbNo = BagCheckHawbNo.objects.filter(Q(bagHawbNo=bagHawbNo.bagHawbNo) & Q(checked=True)).first()
                 if checkHawbNo is not None:
                     setattr(checkHawbNo, 'checked', False)
                     checkHawbNo.save()
@@ -343,31 +342,38 @@ class BagCheckHawbNoViewSet(viewsets.ModelViewSet):
         try:
             lock.acquire()
             with transaction.atomic():
-                code = 200
-                message = "Updated"
+                code = 201
+                message = "Created"
                 checked = False
                 hawbNo = BagHawbNo.objects.filter(bagHawbNo=request.data['bagHawbNo']).select_related('bagNumber').first()
                 if hawbNo is not None:
-                    if hawbNo.bagNumber.bagPort == BagPort.objects.get(pk=request.data['bagPortId']):
-                        checked = True
-                        setattr(hawbNo, 'checked', True)
-                        hawbNo.save()
-                    else:
+                    if hawbNo.bagNumber.bagPort != BagPort.objects.get(pk=request.data['bagPortId']):
                         message = f'다른 지역({hawbNo.bagNumber.bagPort.bagPort}:{hawbNo.bagNumber.bagNumber}번 패키지)로 배정된 아이템입니다.'
                         lock.release()
                         return JsonResponse(status=400, data={'code': 400, 'message': message}, safe=False)
 
-                bagCheckHawbNo, created = BagCheckHawbNo.objects.get_or_create(bagHawbNo=request.data['bagHawbNo'],
-                                                                    defaults={"bagPort": BagPort.objects.get(pk=request.data['bagPortId']), "bagHawbNo": request.data['bagHawbNo'], "checked": checked})
-                if created:
-                    code = 201
-                    message = "Created"
-                else:
-                    setattr(bagCheckHawbNo, 'bagPort', BagPort.objects.get(
-                        pk=request.data['bagPortId']))
-                    setattr(bagCheckHawbNo, 'checked', checked)
-                    bagCheckHawbNo.save()
-
+                if request.data['addType'] == 0:
+                    bagCheckHawbNos = BagCheckHawbNo.objects.filter(bagHawbNo__contains=request.data['bagHawbNo'])
+                    if bagCheckHawbNos is not None:
+                        messages = ""
+                        for bagCheckHawbNo in bagCheckHawbNos:
+                            if messages != "":
+                                messages += ","
+                            messages += f'{bagCheckHawbNo.id}:{bagCheckHawbNo.bagPort.id}'
+                            
+                        if messages != "":
+                            print(messages)
+                            lock.release()
+                            return JsonResponse(status=409, data={'code': 409, 'message': messages}, safe=False)
+                                                                                    
+                hawbNo = BagHawbNo.objects.filter(Q(bagHawbNo=request.data['bagHawbNo']) & Q(checked=False)).first()
+                if hawbNo is not None:
+                    checked = True
+                    setattr(hawbNo, 'checked', checked)
+                    hawbNo.save()
+                
+                BagCheckHawbNo.objects.create(bagPort = BagPort.objects.get(pk=request.data['bagPortId']), bagHawbNo = request.data['bagHawbNo'], checked = checked)
+                
                 lock.release()
                 return JsonResponse(status=201, data={'code': code, 'message': message}, safe=False)
 
@@ -379,11 +385,19 @@ class BagCheckHawbNoViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         try:
             data = json.loads(request.body)
-            bagCheckHawbNo = get_object_or_404(BagCheckHawbNo, id=kwargs['pk'])
-            setattr(bagCheckHawbNo, "bagNumber", BagPort.objects.get(
-                pk=data['bagPortId']))
-            bagCheckHawbNo.save()
-            return JsonResponse(status=200, data={'code': 200, 'message': 'Updated'}, safe=False)
+            if isinstance(data, list):
+                for m in data:
+                    bagCheckHawbNo = get_object_or_404(BagCheckHawbNo, id=m['id'])
+                    setattr(bagCheckHawbNo, "bagPort", BagPort.objects.get(
+                        pk=m['bagPortId']))
+                    bagCheckHawbNo.save()
+                return JsonResponse(status=200, data={'code': 200, 'message': 'Updated'}, safe=False)
+            else:
+                bagCheckHawbNo = get_object_or_404(BagCheckHawbNo, id=kwargs['pk'])
+                setattr(bagCheckHawbNo, "bagPort", BagPort.objects.get(
+                    pk=data['bagPortId']))
+                bagCheckHawbNo.save()
+                return JsonResponse(status=200, data={'code': 200, 'message': 'Updated'}, safe=False)
         except Exception as ex:
             return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
 
@@ -402,7 +416,7 @@ class BagCheckHawbNoViewSet(viewsets.ModelViewSet):
                 if int(kwargs['pk']) < 0:
                     queryset = BagCheckHawbNo.objects.filter(bagPort=BagPort.objects.get(pk=(int(kwargs['pk'])*-1)))
                     for check in queryset:
-                        hawbNo = BagHawbNo.objects.filter(bagHawbNo=check.bagHawbNo).first() 
+                        hawbNo = BagHawbNo.objects.filter(Q(bagHawbNo=check.bagHawbNo) & Q(checked=True)).first() 
                         if hawbNo is not None:
                             setattr(hawbNo, 'checked', False)
                             hawbNo.save() 
@@ -410,7 +424,7 @@ class BagCheckHawbNoViewSet(viewsets.ModelViewSet):
                 else:
                     bagCheckHawbNo = get_object_or_404(BagCheckHawbNo, id=kwargs['pk'])
 
-                    hawbNo = BagHawbNo.objects.filter(bagHawbNo=bagCheckHawbNo.bagHawbNo).first() 
+                    hawbNo = BagHawbNo.objects.filter(Q(bagHawbNo=bagCheckHawbNo.bagHawbNo) & Q(checked=True)).first() 
                     if hawbNo is not None:
                         setattr(hawbNo, 'checked', False)
                         hawbNo.save()            
