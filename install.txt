@@ -5,7 +5,7 @@ pip3 install djangorestframework-simplejwt
 pip3 install django-cors-headers
 pip3 install uwsgi
 
-uwsgi 실행방법
+uwsgi 실행방법 가상환경내에서 실행
 uwsgi --http :13890 --home /home/ubuntu/srtbackend --chdir /srv/SrtBackend/ -w silkroad.wsgi
 sudo /home/ubuntu/srtbackend/bin/uwsgi -i /srv/SrtBackend/.config/uwsgi/silkroad.ini
 
