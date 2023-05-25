@@ -342,10 +342,11 @@ class ManifestAssignmentTeamsViewSet(viewsets.ModelViewSet):
             for h in request.data:
                 q_object = Q(shipper=h["shipper"])
                 q_object &= Q(consignee=h["consignee"])
-                try:
-                    mani = Manifest.objects.filter(q_object).annotate(teamCount=Count('team')).latest('teamCount')
+
+                mani = Manifest.objects.filter(q_object).annotate(teamCount=Count('team')).order_by('-teamCount').first()
+                if mani is not None:
                     hawb_list.append({'hawbNo': h["hawbNo"], 'team': mani.team})
-                except Manifest.DoesNotExist:
+                else:
                     hawb_list.append({'hawbNo': h["hawbNo"], 'team': ''})
                     
             return Response(status=200, data=hawb_list)

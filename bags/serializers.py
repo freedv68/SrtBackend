@@ -26,6 +26,13 @@ class BagPortSerializer(serializers.ModelSerializer):
                   'bagCount', 'bagHawbNoCount', 'bagCheckedHawbNoCount', 'bagCheckBlCount')
 
 
+class BagPortListSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = BagPort
+        fields = ('id', 'bagPort')
+                  
+        
 class BagNumberSerializer(serializers.ModelSerializer):
     bagHawbNoCount = serializers.IntegerField(read_only=True)
     bagCheckedHawbNoCount = serializers.IntegerField(read_only=True)
@@ -59,3 +66,6 @@ class BagHawbNoListSerializer(serializers.ModelSerializer):
     class Meta:
         model = BagHawbNo
         fields = ('id', 'bagHawbNo', 'checked', 'bagNumber', 'bagPort', 'bagComment')
+        
+        
+   

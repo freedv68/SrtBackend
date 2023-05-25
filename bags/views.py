@@ -113,6 +113,28 @@ class BagPortViewSet(viewsets.ModelViewSet):
             return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
 
 
+class BagPortListViewSet(viewsets.ModelViewSet):
+    queryset = BagPort.objects.all()
+    serializer_class = BagPortSerializer
+
+    def get_queryset(self):
+        bag_date = self.request.query_params.get('bag_date', None)
+        if bag_date is None:
+            return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
+
+        bagDateObj = get_or_none(BagDate, bagDate=bag_date)
+        if bagDateObj is None:
+            q_object = Q(bagPort="AAAAA")
+            return BagPort.objects.filter(q_object).values(
+                'id', 
+                'bagPort')
+        else:
+            q_object = Q(bagDate=bagDateObj)
+            return BagPort.objects.filter(q_object).values(
+                'id', 
+                'bagPort')
+
+
 class BagNumberViewSet(viewsets.ModelViewSet):
     queryset = BagNumber.objects.all()
     serializer_class = BagNumberSerializer
@@ -236,7 +258,7 @@ class BagHawbNoViewSet(viewsets.ModelViewSet):
                 checkHawbNo = BagCheckHawbNo.objects.filter(bagHawbNo=request.data['bagHawbNo']).first()
                 if checkHawbNo is not None:
                     if checkHawbNo.bagPort != BagPort.objects.get(pk=request.data['bagPortId']):
-                        message = f'다른 지역({checkHawbNo.bagPort.bagPort})으로 배정된 아이템입니다.'
+                        message = f'다른 지역({checkHawbNo.bagPort.bagPort})으로 체크된 아이템입니다.'
                         if lock.locked():
                             lock.release()
                         return JsonResponse(status=400, data={'code': 400, 'message': message}, safe=False)
@@ -285,7 +307,7 @@ class BagHawbNoViewSet(viewsets.ModelViewSet):
                     checkHawbNo.save()
                     checked = True
                 else:
-                    message = f'다른 지역({checkHawbNo.bagPort.bagPort})으로 배정된 아이템입니다.'
+                    message = f'다른 지역({checkHawbNo.bagPort.bagPort})으로 체크된 아이템입니다.'
                     lock.release()
                     return JsonResponse(status=400, data={'code': 400, 'message': message}, safe=False)
 
@@ -359,7 +381,7 @@ class BagCheckHawbNoViewSet(viewsets.ModelViewSet):
                         for bagCheckHawbNo in bagCheckHawbNos:
                             if messages != "":
                                 messages += ","
-                            messages += f'{bagCheckHawbNo.id}:{bagCheckHawbNo.bagPort.id}'
+                            messages += f'{bagCheckHawbNo.id}:{bagCheckHawbNo.bagPort.id}:{bagCheckHawbNo.bagPort.bagPort}'
                             
                         if messages != "":
                             print(messages)
@@ -459,3 +481,6 @@ class BagHawbNoListViewSet(viewsets.ModelViewSet):
             q_object &= Q(checked=True if checked == '체크' else False)
             
         return BagHawbNo.objects.select_related('bagNumber').filter(q_object)
+    
+    
+
