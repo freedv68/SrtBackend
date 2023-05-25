@@ -3,12 +3,13 @@ from django.http import JsonResponse
 from rest_framework import permissions, viewsets
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.db.models import Q, Count
+from django.db.models import Q, Count, F
 from django.shortcuts import get_object_or_404
 from manifest.models import Manifest
-from manifest.serializers import ManifestSerializer, ManifestHawbNoSerializer, ManifestPortSerializer, ManifestTeamSerializer, ManifestInsertDateSerializer
+from manifest.serializers import ManifestSerializer, ManifestHawbNoSerializer, ManifestPortSerializer, ManifestTeamSerializer, ManifestInsertDateSerializer, ManifestAssignmentTeamsSerializer
 from datetime import datetime, timedelta
 import threading
+
 
 lock = threading.Lock()  # threading에서 Lock 함수 가져오기
 
@@ -332,27 +333,28 @@ class ManifestViewSet(viewsets.ModelViewSet):
 
 class ManifestAssignmentTeamsViewSet(viewsets.ModelViewSet):
     queryset = Manifest.objects.all()
-    
+    serializer_class = ManifestAssignmentTeamsSerializer
+
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [JWTAuthentication]
         
     def create(self, request, *args, **kwargs):
-        try:
+        #try:
             hawb_list = []
             for h in request.data:
                 q_object = Q(shipper=h["shipper"])
                 q_object &= Q(consignee=h["consignee"])
 
-                mani = Manifest.objects.filter(q_object).annotate(teamCount=Count('team')).order_by('-teamCount').first()
+                mani = Manifest.objects.filter(q_object).values('team').annotate(teamCount=Count('team')).order_by('-teamCount').first()
                 if mani is not None:
-                    hawb_list.append({'hawbNo': h["hawbNo"], 'team': mani.team})
+                    hawb_list.append({'hawbNo': h["hawbNo"], 'team': mani['team']})
                 else:
                     hawb_list.append({'hawbNo': h["hawbNo"], 'team': ''})
                     
             return Response(status=200, data=hawb_list)
         
-        except Exception as ex:
-            return JsonResponse(status=400, data={'code': 400, 'message': f'Bad Request - {ex}'}, safe=False)
+        #except Exception as ex:
+        #    return JsonResponse(status=400, data={'code': 400, 'message': f'Bad Request - {ex}'}, safe=False)
         
 class ManifestHawbNoViewSet(viewsets.ModelViewSet):
     queryset = Manifest.objects.all()

@@ -18,6 +18,7 @@ class ManifestHawbNoSerializer(serializers.ModelSerializer):
 
 
 class ManifestAssignmentTeamsSerializer(serializers.ModelSerializer):
+    
     class Meta:
         model = Manifest
         fields = ('hawbNo', 'team')
