@@ -45,3 +45,10 @@ cd ~
 source ~/srtbackend/bin/activate #가상환경 활성화
 python3 manage.py makemigrations
 python3 manage.py migrate
+
+
+
+git init
+git add .
+git remote add origin https://github.com/freedv68/SrtBackend.git
+git clone https://github.com/freedv68/SrtBackend.git

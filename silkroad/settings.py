@@ -43,7 +43,7 @@ SECRET_KEY = get_secret("SECRET_KEY")
 DEBUG = False
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.0.19',
-                 '192.168.0.10', '129.154.59.53']
+                 '192.168.0.10', '129.154.59.53', '144.24.84.23']
 
 
 # CORS
@@ -56,6 +56,8 @@ CORS_ALLOWED_ORIGINS = [
     'http://192.168.0.19:4200',
     'http://129.154.59.53',
     'http://129.154.59.53:13890',
+    'http://144.24.84.23',
+    'http://144.24.84.23:13890',
     'http://localhost'
 ]
 
@@ -67,6 +69,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:4200',
     'http://192.168.0.19:4200',
     'http://129.154.59.53',
+    'http://144.24.84.23',
 ]
 
 # REST_FRAMEWORK
