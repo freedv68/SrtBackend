@@ -40,7 +40,7 @@ def get_secret(setting, secrets=secrets):  # 예외 처리를 통해 오류 발�
 SECRET_KEY = get_secret("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.0.19',
                  '192.168.0.10', '129.154.59.53']
@@ -48,7 +48,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.0.19',
 
 # CORS
 
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_ALLOW_ALL = False
 
 
 CORS_ALLOWED_ORIGINS = [
