@@ -1,17 +1,20 @@
 python manage.py runserver 192.168.0.19:8080
 python manage.py runserver 129.154.59.53:8080
 
+가상환경에서 설치
 pip3 install djangorestframework
 pip3 install djangorestframework-simplejwt
 pip3 install django-cors-headers
-pip3 install uwsgi
 
-uwsgi 실행방법 가상환경내에서 실행
-uwsgi --http :13890 --home /home/ubuntu/srtbackend --chdir /srv/SrtBackend/ -w silkroad.wsgi
+
+가상환경에서 나와서 설치
+pip3 install uwsgi
 sudo /home/ubuntu/srtbackend/bin/uwsgi -i /srv/SrtBackend/.config/uwsgi/silkroad.ini
 
 uwsgi.service 파일을 데몬(백그라운드에 실행)에 등록
 sudo ln -f /srv/SrtBackend/.config/uwsgi/uwsgi.service /etc/systemd/system/uwsgi.service
+서비스 활성화
+sudo systemctl enable uwsgi
 
 
 » sudo systemctl daemon-reload
@@ -29,6 +32,8 @@ exec sudo nsenter -t $(pidof systemd) -a su - $LOGNAME
 snap version
 
 
+sudo vi /etc/nginx/nginx.conf
+키보드에서 i를 눌러 수정 모드로 바꾼 뒤 첫 줄에 www-data로 되어 있는 user를 ubuntu로 아래와 같이 수정
 
 
 sudo cp -f /srv/SrtBackend/.config/nginx/silkroad.conf /etc/nginx/sites-available/silkroad.conf
