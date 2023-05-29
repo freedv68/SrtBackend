@@ -1,7 +1,10 @@
 python manage.py runserver 192.168.0.19:8080
 python manage.py runserver 129.154.59.53:8080
 
+py -m pip freeze > requirements.txt
+
 가상환경에서 설치
+pip3 install -r requirements.txt
 pip3 install djangorestframework
 pip3 install djangorestframework-simplejwt
 pip3 install django-cors-headers
