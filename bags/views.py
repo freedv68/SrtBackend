@@ -84,10 +84,10 @@ class BagPortViewSet(viewsets.ModelViewSet):
             ).values(
             'id', 
             'bagPort', 
-            bagCount=Count('bagnumber__bagNumber', distinct=True),
-            bagHawbNoCount=Count('bagnumber__baghawbno__bagHawbNo', distinct=True),
-            bagCheckedHawbNoCount=Count('bagnumber__baghawbno__bagHawbNo', filter=Q(bagnumber__baghawbno__checked=True), distinct=True),
-            bagCheckBlCount=Count('bagcheckhawbno', distinct=True)
+            bagCount=Count('bagnumber__id', distinct=True),
+            bagHawbNoCount=Count('bagnumber__baghawbno__id', distinct=True),
+            bagCheckedHawbNoCount=Count('bagnumber__baghawbno__id', filter=Q(bagnumber__baghawbno__checked=True), distinct=True),
+            bagCheckBlCount=Count('bagcheckhawbno__id', distinct=True)
         )
 
     def create(self, request, *args, **kwargs):
