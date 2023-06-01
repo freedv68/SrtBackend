@@ -33,7 +33,7 @@ class BagDateViewSet(viewsets.ModelViewSet):
             bagHawbNoCount=Count('bagport__bagnumber__baghawbno__id', distinct=True),
             bagCheckedHawbNoCount=Count('bagport__bagnumber__baghawbno__id', 
                                       filter=Q(bagport__bagnumber__baghawbno__checked=True), distinct=True),
-            bagCheckBlCount=Count('bagport__bagcheckhawbno_id', distinct=True)
+            bagCheckBlCount=Count('bagport__bagcheckhawbno__id', distinct=True)
         )
 
     def create(self, request, *args, **kwargs):
