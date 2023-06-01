@@ -28,12 +28,12 @@ class BagDateViewSet(viewsets.ModelViewSet):
             'id',
             'bagDate',
             bagCount=Count(Concat('bagport__bagPort',
-                           'bagport__bagnumber__bagNumber'), 
+                           'bagport__bagnumber__id'), 
                            filter=Q(bagport__bagnumber__bagNumber__isnull=False), distinct=True),
-            bagHawbNoCount=Count('bagport__bagnumber__baghawbno__bagHawbNo', distinct=True),
-            bagCheckedHawbNoCount=Count('bagport__bagnumber__baghawbno__bagHawbNo', 
+            bagHawbNoCount=Count('bagport__bagnumber__baghawbno__id', distinct=True),
+            bagCheckedHawbNoCount=Count('bagport__bagnumber__baghawbno__id', 
                                       filter=Q(bagport__bagnumber__baghawbno__checked=True), distinct=True),
-            bagCheckBlCount=Count('bagport__bagcheckhawbno', distinct=True)
+            bagCheckBlCount=Count('bagport__bagcheckhawbno_id', distinct=True)
         )
 
     def create(self, request, *args, **kwargs):
