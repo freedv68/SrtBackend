@@ -43,12 +43,14 @@ class ManifestViewSet(viewsets.ModelViewSet):
             insertDate__lte=to_insert_date)
 
         if keyword is not None:
+            """
             date_time_obj = datetime.strptime(
                 from_insert_date, '%Y-%m-%d') - timedelta(7)
             from_date = date_time_obj.strftime('%Y-%m-%d')
             q_objects = Q(insertDate__gte=from_date) & Q(
                 insertDate__lte=to_insert_date)
-            q_objects &= Q(hawbNo__icontains=keyword) | Q(
+            """
+            q_objects = Q(hawbNo__icontains=keyword) | Q(
                 shipper__icontains=keyword) | Q(consignee__icontains=keyword) | Q(attn__icontains=keyword) | Q(phoneNumber__icontains=keyword)
         else:
             partner = self.request.query_params.get("partner", None)
@@ -227,13 +229,13 @@ class ManifestViewSet(viewsets.ModelViewSet):
                                         charge1=m['charge1'], charge2=m['charge2'], team=m['team'],
                                         address=m['address'], insertDate=m['insertDate'], modified=m['modified'],
                                         scanned=m['scanned'], inspected=m['inspected'], canceled=m['canceled'], exclude=m['exclude'],
-                                        stepped=m['stepped'], sea=m['sea'], together=m['together'], scanTimes=m['scanTimes'], delievryComplete=m['deliveryComplete'])
+                                        stepped=m['stepped'], sea=m['sea'], together=m['together'], scanTimes=m['scanTimes'], deliveryComplete=m['deliveryComplete'])
 
                     mani_objs.append(mani_obj)
 
                 Manifest.objects.bulk_update(
                     mani_objs, fields=['no', 'shipper', 'consignee', 'item', 'ct', 'wt', 'value', 'attn', 'phoneNumber',
-                                       'pc', 'port', 'note', 'specialNote', 'charge1', 'charge2', 'team', 'address'])
+                                        'pc', 'port', 'note', 'specialNote', 'charge1', 'charge2', 'team', 'address', 'insertDate'])
                 return JsonResponse(status=201, data={'code': 201, 'message': 'Updated'}, safe=False)
 
             except Exception as ex:
