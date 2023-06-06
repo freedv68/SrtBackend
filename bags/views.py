@@ -388,13 +388,14 @@ class BagCheckHawbNoViewSet(viewsets.ModelViewSet):
                             lock.release()
                             return JsonResponse(status=409, data={'code': 409, 'message': messages}, safe=False)
                                                                                     
-                hawbNo = BagHawbNo.objects.filter(Q(bagHawbNo=request.data['bagHawbNo']) & Q(checked=False)).first()
-                if hawbNo is not None:
-                    checked = True
-                    setattr(hawbNo, 'checked', checked)
-                    hawbNo.save()
-                
-                BagCheckHawbNo.objects.create(bagPort = BagPort.objects.get(pk=request.data['bagPortId']), bagHawbNo = request.data['bagHawbNo'], checked = checked)
+                if request.data['addType'] != 2:
+                    hawbNo = BagHawbNo.objects.filter(Q(bagHawbNo=request.data['bagHawbNo']) & Q(checked=False)).first()
+                    if hawbNo is not None:
+                        checked = True
+                        setattr(hawbNo, 'checked', checked)
+                        hawbNo.save()
+                    
+                    BagCheckHawbNo.objects.create(bagPort = BagPort.objects.get(pk=request.data['bagPortId']), bagHawbNo = request.data['bagHawbNo'], checked = checked)
                 
                 lock.release()
                 return JsonResponse(status=201, data={'code': code, 'message': message}, safe=False)
