@@ -63,7 +63,7 @@ class ManifestViewSet(viewsets.ModelViewSet):
             stepped = self.request.query_params.get("stepped", "false")
             sea = self.request.query_params.get("sea", "false")
             together = self.request.query_params.get("together", "false")
-            deliveryComplete = self.request.query_params.get("deliveryComplete", "false")
+            deliveryComplete = self.request.query_params.get("delivery_complete", None)
 
             if partner is not None and partner != '전체':
                 if partner == '실크로드':
@@ -91,6 +91,12 @@ class ManifestViewSet(viewsets.ModelViewSet):
                 else:
                     q_objects &= Q(scanned=False)
 
+            if deliveryComplete is not None and deliveryComplete != '전체':
+                if deliveryComplete == '배송':
+                    q_objects &= Q(deliveryComplete=True)
+                else:
+                    q_objects &= Q(deliveryComplete=False)
+                    
             q_objects_ex = []
             if inspected == "true":
                 q_objects_ex = Q(inspected=True)
@@ -119,11 +125,6 @@ class ManifestViewSet(viewsets.ModelViewSet):
                     q_objects_ex = Q(together=True)
                 else:
                     q_objects_ex |= Q(together=True)
-            if deliveryComplete == "true":
-                if q_objects_ex == []:
-                    q_objects_ex = Q(deliveryComplete=True)
-                else:
-                    q_objects_ex |= Q(deliveryComplete=True)
 
             if q_objects_ex != []:
                 q_objects &= q_objects_ex

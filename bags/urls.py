@@ -1,4 +1,4 @@
-from django.urls import include, re_path, path
+from django.urls import include, re_path
 from rest_framework.routers import DefaultRouter
 
 from bags.views import BagDateViewSet, BagPortViewSet, BagPortListViewSet, BagNumberViewSet, BagHawbNoViewSet, BagCheckHawbNoViewSet, BagHawbNoListViewSet
