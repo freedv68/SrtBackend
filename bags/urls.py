@@ -1,7 +1,7 @@
 from django.urls import include, re_path
 from rest_framework.routers import DefaultRouter
 
-from bags.views import BagDateViewSet, BagPortViewSet, BagPortListViewSet, BagNumberViewSet, BagHawbNoViewSet, BagCheckHawbNoViewSet, BagHawbNoListViewSet
+from bags.views import BagDateViewSet, BagPortViewSet, BagPortListViewSet, BagNumberViewSet, BagHawbNoViewSet, BagCheckHawbNoViewSet, BagHawbNoListViewSet, BagCheckHawbNoListViewSet
 
 router = DefaultRouter()
 router.register(r'bagDate', BagDateViewSet)
@@ -11,6 +11,7 @@ router.register(r'bagNumber', BagNumberViewSet)
 router.register(r'bagHawbNo', BagHawbNoViewSet)
 router.register(r'bagCheckHawbNo', BagCheckHawbNoViewSet)
 router.register(r'bagHawbNoList', BagHawbNoListViewSet)
+router.register(r'bagCheckHawbNoList', BagCheckHawbNoListViewSet)
 
 urlpatterns = [
     re_path(r'^', include(router.urls)),

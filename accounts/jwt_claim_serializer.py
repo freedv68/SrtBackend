@@ -3,6 +3,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, Toke
 from rest_framework_simplejwt.state import token_backend
 from django.contrib.auth.models import User
 from helper.helper import get_or_none
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
     @classmethod

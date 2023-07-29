@@ -2,7 +2,7 @@ import traceback
 from django.http import JsonResponse
 from rest_framework import viewsets
 from bags.models import BagDate, BagPort, BagNumber, BagHawbNo, BagCheckHawbNo
-from bags.serializers import BagDateSerializer, BagPortSerializer, BagNumberSerializer, BagHawbNoSerializer, BagCheckHawbNoSerializer, BagHawbNoListSerializer
+from bags.serializers import BagDateSerializer, BagPortSerializer, BagNumberSerializer, BagHawbNoSerializer, BagCheckHawbNoSerializer, BagHawbNoListSerializer, BagCheckHawbNoListSerializer
 from django.db import transaction
 from django.db.models import Count, Q, Prefetch, Value
 from django.db.models.functions import Concat
@@ -484,4 +484,43 @@ class BagHawbNoListViewSet(viewsets.ModelViewSet):
         return BagHawbNo.objects.select_related('bagNumber').filter(q_object)
     
     
+class BagCheckHawbNoListViewSet(viewsets.ModelViewSet):
+    queryset = BagCheckHawbNo.objects.all()
+    serializer_class = BagCheckHawbNoListSerializer
+    
+    def list(self, request):
+        bag_date = self.request.query_params.get("bag_date", None)
+        bag_port = self.request.query_params.get("bag_port", None)
+        checked = self.request.query_params.get("checked", None)
+        if bag_port is None or bag_date is None or checked is None:
+            return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
 
+        q_object = Q(bagPort__bagDate__bagDate__exact=bag_date)
+        if (bag_port != '전체'):
+            q_object &= Q(bagPort__bagPort__exact=bag_port)
+        if (checked is not None and checked != '전체'):
+            q_object &= Q(checked=True if checked == '체크' else False)
+            
+        queryset = BagCheckHawbNo.objects.select_related('bagPort').filter(q_object)
+        
+        bagsResponse = []
+        for checkHawbNo in queryset:
+            hawbNo = get_or_none(BagHawbNo, bagHawbNo=checkHawbNo.bagHawbNo)
+            bagNumber = 0
+            bagComment = ''
+            if hawbNo is not None:
+                bagNumber = hawbNo.bagNumber.bagNumber
+                bagNumberObj = get_or_none(BagNumber, id=hawbNo.bagNumber.id)
+                if bagNumberObj is not None:
+                    bagComment = bagNumberObj.bagComment
+                
+            bagsResponse.append({
+                "id": checkHawbNo.id,
+                "bagHawbNo": checkHawbNo.bagHawbNo,
+                "checked": checkHawbNo.checked,
+                "bagNumber": bagNumber,
+                "bagPort": checkHawbNo.bagPort.bagPort,
+                "bagComment": bagComment               
+            })
+
+        return JsonResponse(status=200, data=bagsResponse, safe=False)
