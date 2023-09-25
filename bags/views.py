@@ -44,7 +44,7 @@ class BagDateViewSet(viewsets.ModelViewSet):
             if serializer.is_valid():
                 bag_date = serializer.save()
 
-                port_ = ["YNT", "TAO", "TAO-1", "WEH", "SHA", "CAN", "SGN", "CGK"]
+                port_ = ["YNT", "YNT-1", "TAO", "TAO-1", "TAO-2", "WEH", "SHA", "CAN", "SGN", "CGK"]
                 for port in port_:
                     BagPort.objects.create(bagDate=bag_date, bagPort=port)
 
