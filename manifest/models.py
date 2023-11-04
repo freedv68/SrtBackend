@@ -31,6 +31,7 @@ class Manifest(models.Model):
     together = models.BooleanField(default=False)
     scanTimes = models.IntegerField(default=0)
     deliveryComplete = models.BooleanField(default=False)
+    notCarry = models.BooleanField(default=False)
 
 
 

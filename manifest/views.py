@@ -64,6 +64,7 @@ class ManifestViewSet(viewsets.ModelViewSet):
             sea = self.request.query_params.get("sea", "false")
             together = self.request.query_params.get("together", "false")
             deliveryComplete = self.request.query_params.get("delivery_complete", None)
+            notCarry = self.request.query_params.get("not_carry", None)
 
             if partner is not None and partner != '전체':
                 if partner == '실크로드':
@@ -125,6 +126,11 @@ class ManifestViewSet(viewsets.ModelViewSet):
                     q_objects_ex = Q(together=True)
                 else:
                     q_objects_ex |= Q(together=True)
+            if notCarry == "true":
+                if q_objects_ex == []:
+                    q_objects_ex = Q(notCarry=True)
+                else:
+                    q_objects_ex |= Q(notCarry=True)
 
             if q_objects_ex != []:
                 q_objects &= q_objects_ex
@@ -165,7 +171,8 @@ class ManifestViewSet(viewsets.ModelViewSet):
                                         charge1=m['charge1'], charge2=m['charge2'], team=m['team'], 
                                         address=m['address'], insertDate=m['insertDate'], modified=m['modified'], 
                                         scanned=m['scanned'], inspected=m['inspected'], canceled=m['canceled'], exclude=m['exclude'],
-                                        stepped=m['stepped'], sea=m['sea'], together=m['together'], scanTimes=m['scanTimes'], deliveryComplete=m['deliveryComplete'])
+                                        stepped=m['stepped'], sea=m['sea'], together=m['together'], scanTimes=m['scanTimes'], 
+                                        deliveryComplete=m['deliveryComplete'], notCarry=m['notCarry'])
 
                     mani_objs.append(mani_obj)
 
@@ -230,7 +237,8 @@ class ManifestViewSet(viewsets.ModelViewSet):
                                         charge1=m['charge1'], charge2=m['charge2'], team=m['team'],
                                         address=m['address'], insertDate=m['insertDate'], modified=m['modified'],
                                         scanned=m['scanned'], inspected=m['inspected'], canceled=m['canceled'], exclude=m['exclude'],
-                                        stepped=m['stepped'], sea=m['sea'], together=m['together'], scanTimes=m['scanTimes'], deliveryComplete=m['deliveryComplete'])
+                                        stepped=m['stepped'], sea=m['sea'], together=m['together'], scanTimes=m['scanTimes'], 
+                                        deliveryComplete=m['deliveryComplete'], notCarry=m['notCarry'])
 
                     mani_objs.append(mani_obj)
 
@@ -301,6 +309,7 @@ class ManifestViewSet(viewsets.ModelViewSet):
             manifest = get_object_or_404(Manifest, hawbNo=kwargs['pk'])
 
             setattr(manifest, data['field'], data['value'])
+            print(data)
 
             if 'field1' in data:
                 field1 = data['field1']

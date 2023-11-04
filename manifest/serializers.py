@@ -8,7 +8,7 @@ class ManifestSerializer(serializers.ModelSerializer):
             'value', 'attn', 'phoneNumber', 'pc', 'port', 'note', 
             'specialNote', 'charge1', 'charge2', 'team', 'address', 
             'insertDate', 'modified', 'scanned', 'inspected', 'canceled', 'exclude',
-                  'stepped', 'sea', 'together', 'scanTimes', 'deliveryComplete')
+                  'stepped', 'sea', 'together', 'scanTimes', 'deliveryComplete', 'notCarry')
     
 
 class ManifestHawbNoSerializer(serializers.ModelSerializer):
