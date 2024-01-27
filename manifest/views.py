@@ -469,6 +469,20 @@ class ManifestTeamViewSet(viewsets.ModelViewSet):
 
         return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
 
+    def partial_update(self, request, *args, **kwargs):
+        try:
+            manifest = get_object_or_404(Manifest, hawbNo=kwargs['pk'])
+
+            q_objects = Q(consignee__exact=manifest.consignee)
+            queryset = Manifest.objects.filter(
+                q_objects)
+            
+            queryset.update(team=manifest.team)
+            
+            return JsonResponse(status=200, data={'code': 200, 'message': 'Updated'}, safe=False)
+        except Exception as ex:
+            return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
+
 
 class ManifestInsertDateViewSet(viewsets.ModelViewSet):
     queryset = Manifest.objects.all()
