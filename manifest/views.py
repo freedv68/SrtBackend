@@ -6,7 +6,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.db.models import Q, Count, F
 from django.shortcuts import get_object_or_404
 from manifest.models import Manifest
-from manifest.serializers import ManifestSerializer, ManifestHawbNoSerializer, ManifestPortSerializer, ManifestTeamSerializer, ManifestInsertDateSerializer, ManifestAssignmentTeamsSerializer
+from manifest.serializers import ManifestFlightSerializer, ManifestSerializer, ManifestHawbNoSerializer, ManifestPortSerializer, ManifestTeamSerializer, ManifestInsertDateSerializer, ManifestAssignmentTeamsSerializer
 from datetime import datetime, timedelta
 import threading
 
@@ -65,6 +65,7 @@ class ManifestViewSet(viewsets.ModelViewSet):
             together = self.request.query_params.get("together", "false")
             deliveryComplete = self.request.query_params.get("delivery_complete", None)
             notCarry = self.request.query_params.get("not_carry", None)
+            flight = self.request.query_params.get("flight", None)
 
             if partner is not None and partner != '전체':
                 if partner == '실크로드':
@@ -86,6 +87,13 @@ class ManifestViewSet(viewsets.ModelViewSet):
                 else:
                     q_objects &= Q(team__in=teams)
 
+            if flight is not None and len(flight) > 0 and flight != '전체':
+                flights = flight.split(',')
+                if (len(flights) == 1):
+                    q_objects &= Q(flight__exact=flight)
+                else:
+                    q_objects &= Q(flight__in=flights)
+                    
             if scanned is not None and scanned != '전체':
                 if scanned == '스캔':
                     q_objects &= Q(scanned=True)
@@ -172,7 +180,7 @@ class ManifestViewSet(viewsets.ModelViewSet):
                                         address=m['address'], insertDate=m['insertDate'], modified=m['modified'], 
                                         scanned=m['scanned'], inspected=m['inspected'], canceled=m['canceled'], exclude=m['exclude'],
                                         stepped=m['stepped'], sea=m['sea'], together=m['together'], scanTimes=m['scanTimes'], 
-                                        deliveryComplete=m['deliveryComplete'], notCarry=m['notCarry'])
+                                        deliveryComplete=m['deliveryComplete'], notCarry=m['notCarry'], flight=m['flight'])
 
                     mani_objs.append(mani_obj)
 
@@ -213,6 +221,7 @@ class ManifestViewSet(viewsets.ModelViewSet):
                     setattr(manifest, 'charge2', data['charge2'])
                     setattr(manifest, 'team', data['team'])
                     setattr(manifest, 'address', data['address'])
+                    setattr(manifest, 'flight', data['flight'])
 
                     manifest.save()
                     lock.release()
@@ -238,13 +247,13 @@ class ManifestViewSet(viewsets.ModelViewSet):
                                         address=m['address'], insertDate=m['insertDate'], modified=m['modified'],
                                         scanned=m['scanned'], inspected=m['inspected'], canceled=m['canceled'], exclude=m['exclude'],
                                         stepped=m['stepped'], sea=m['sea'], together=m['together'], scanTimes=m['scanTimes'], 
-                                        deliveryComplete=m['deliveryComplete'], notCarry=m['notCarry'])
+                                        deliveryComplete=m['deliveryComplete'], notCarry=m['notCarry'], flight=m['flight'])
 
                     mani_objs.append(mani_obj)
 
                 Manifest.objects.bulk_update(
                     mani_objs, fields=['no', 'shipper', 'consignee', 'item', 'ct', 'wt', 'value', 'attn', 'phoneNumber',
-                                        'pc', 'port', 'note', 'specialNote', 'charge1', 'charge2', 'team', 'address', 'insertDate'])
+                                        'pc', 'port', 'note', 'specialNote', 'charge1', 'charge2', 'team', 'address', 'insertDate', 'flight'])
                 return JsonResponse(status=201, data={'code': 201, 'message': 'Updated'}, safe=False)
 
             except Exception as ex:
@@ -279,6 +288,7 @@ class ManifestViewSet(viewsets.ModelViewSet):
                 setattr(manifest, 'charge2', data['charge2'])
                 setattr(manifest, 'team', data['team'])
                 setattr(manifest, 'address', data['address'])
+                setattr(manifest, 'flight', data['flight'])
                 """
                 setattr(manifest, 'scanned', data['scanned'])
                 setattr(manifest, 'inspcected', data['inspected'])
@@ -482,6 +492,30 @@ class ManifestTeamViewSet(viewsets.ModelViewSet):
             return JsonResponse(status=200, data={'code': 200, 'message': 'Updated'}, safe=False)
         except Exception as ex:
             return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
+
+
+class ManifestFlightViewSet(viewsets.ModelViewSet):
+    queryset = Manifest.objects.all()
+    serializer_class = ManifestFlightSerializer
+
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get_queryset(self):
+        group = self.request.query_params.get("group", None)
+        from_insert_date = self.request.query_params.get("s_date", None)
+        to_insert_date = self.request.query_params.get("e_date", None)
+
+        if from_insert_date is None or to_insert_date is None:
+            return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
+
+        q_objects = Q(insertDate__gte=from_insert_date) & Q(
+            insertDate__lte=to_insert_date)
+
+        if group == "flight":
+            return Manifest.objects.filter(q_objects).values("flight").annotate(Count('flight'))
+
+        return JsonResponse(status=400, data={'code': 400, 'message': 'Bad Request'}, safe=False)
 
 
 class ManifestInsertDateViewSet(viewsets.ModelViewSet):

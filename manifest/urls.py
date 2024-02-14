@@ -1,7 +1,7 @@
 from django.urls import include, re_path, path
 from rest_framework.routers import DefaultRouter
 
-from manifest.views import ManifestViewSet, ManifestHawbNoViewSet, ManifestPortViewSet, ManifestTeamViewSet, ManifestInsertDateViewSet, ManifestAssignmentTeamsViewSet
+from manifest.views import ManifestFlightViewSet, ManifestViewSet, ManifestHawbNoViewSet, ManifestPortViewSet, ManifestTeamViewSet, ManifestInsertDateViewSet, ManifestAssignmentTeamsViewSet
 
 
 # Create a router and register our viewsets with it.
@@ -10,6 +10,7 @@ router.register(r'manifest', ManifestViewSet)
 router.register(r'manifestHawbNo', ManifestHawbNoViewSet)
 router.register(r'manifestPort', ManifestPortViewSet)
 router.register(r'manifestTeam', ManifestTeamViewSet)
+router.register(r'manifestFlight', ManifestFlightViewSet)
 router.register(r'manifestInsertDate', ManifestInsertDateViewSet)
 router.register(r'manifestAssignmentTeams', ManifestAssignmentTeamsViewSet)
 
