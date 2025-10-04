@@ -180,7 +180,7 @@ class ManifestViewSet(viewsets.ModelViewSet):
                                         address=m['address'], insertDate=m['insertDate'], modified=m['modified'], 
                                         scanned=m['scanned'], inspected=m['inspected'], canceled=m['canceled'], exclude=m['exclude'],
                                         stepped=m['stepped'], sea=m['sea'], together=m['together'], scanTimes=m['scanTimes'], 
-                                        deliveryComplete=m['deliveryComplete'], notCarry=m['notCarry'], flight=m['flight'])
+                                        deliveryComplete=m['deliveryComplete'], notCarry=m['notCarry'], flight=m['flight'], scanDate=m['scanDate'])
 
                     mani_objs.append(mani_obj)
 
@@ -247,7 +247,7 @@ class ManifestViewSet(viewsets.ModelViewSet):
                                         address=m['address'], insertDate=m['insertDate'], modified=m['modified'],
                                         scanned=m['scanned'], inspected=m['inspected'], canceled=m['canceled'], exclude=m['exclude'],
                                         stepped=m['stepped'], sea=m['sea'], together=m['together'], scanTimes=m['scanTimes'], 
-                                        deliveryComplete=m['deliveryComplete'], notCarry=m['notCarry'], flight=m['flight'])
+                                        deliveryComplete=m['deliveryComplete'], notCarry=m['notCarry'], flight=m['flight'], scanDate=m['scanDate'])
 
                     mani_objs.append(mani_obj)
 
@@ -422,6 +422,10 @@ class ManifestHawbNoViewSet(viewsets.ModelViewSet):
                 setattr(manifest, data['field'], data['value'])
                 if (data['field'] == 'scanned'):
                     setattr(manifest, 'scanTimes', int(manifest.ct))
+                    
+                    now = datetime.now()
+                    formatted_date = now.strftime("%Y-%m-%d %H:%M:%S")                    
+                    setattr(manifest, 'scanDate', formatted_date)   
 
                 manifest.save()
 

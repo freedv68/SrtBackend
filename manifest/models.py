@@ -33,6 +33,6 @@ class Manifest(models.Model):
     deliveryComplete = models.BooleanField(default=False)
     notCarry = models.BooleanField(default=False)
     flight = models.CharField(max_length=50, default='')
-
+    scanDate = models.CharField(max_length=20, default='')
 
 
