@@ -42,8 +42,8 @@ SECRET_KEY = get_secret("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.0.16',
-                 '192.168.0.10', '144.24.74.133']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.0.9',
+                 '192.168.0.8', '144.24.74.133']
 
 
 # CORS
@@ -53,7 +53,8 @@ CORS_ORIGIN_ALLOW_ALL = False
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:4200',
-    'http://192.168.0.16:4200',
+    'http://192.168.0.9:4200',
+    'http://192.168.0.8',
     'http://144.24.74.133',
     'http://144.24.74.133:13890',
     'http://localhost'
@@ -65,7 +66,8 @@ CORS_ALLOWED_ORIGINS = [
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:4200',
-    'http://192.168.0.16:4200',
+    'http://192.168.0.9:4200',
+    'http://192.168.0.8',
     'http://144.24.74.133',
 ]
 

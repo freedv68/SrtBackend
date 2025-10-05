@@ -319,13 +319,33 @@ class ManifestViewSet(viewsets.ModelViewSet):
             manifest = get_object_or_404(Manifest, hawbNo=kwargs['pk'])
 
             setattr(manifest, data['field'], data['value'])
-            print(data)
-
+            print('update1')
+            if (data['field'] == 'scanned'):
+                # setattr(manifest, 'scanTimes', int(manifest.ct))
+                
+                formatted_date = ''
+                if manifest.scanned:
+                    now = datetime.now()
+                    formatted_date = now.strftime("%Y-%m-%d %H:%M:%S")            
+                    
+                print(formatted_date)    
+                setattr(manifest, 'scanDate', formatted_date)   
+                
             if 'field1' in data:
                 field1 = data['field1']
                 value1 = data['value1']
                 setattr(manifest, field1, value1)
-
+                if (data['field1'] == 'scanned'):
+                    # setattr(manifest, 'scanTimes', int(manifest.ct))
+                    
+                    formatted_date = ''
+                    if int(manifest.scanTimes) > 0:
+                        now = datetime.now()
+                        formatted_date = now.strftime("%Y-%m-%d %H:%M:%S")            
+                        
+                    print(formatted_date)    
+                    setattr(manifest, 'scanDate', formatted_date) 
+                
             manifest.save()
             return JsonResponse(status=200, data={'code': 200, 'message': 'Updated'}, safe=False)
         except Exception as ex:
@@ -417,14 +437,19 @@ class ManifestHawbNoViewSet(viewsets.ModelViewSet):
             data = json.loads(request.body)
             hawb_nos = json.loads(data['hawbNos'])
 
+            print('update2')
             for hawb in hawb_nos:
                 manifest = get_object_or_404(Manifest, hawbNo=hawb['hawbNo'])
                 setattr(manifest, data['field'], data['value'])
                 if (data['field'] == 'scanned'):
                     setattr(manifest, 'scanTimes', int(manifest.ct))
                     
-                    now = datetime.now()
-                    formatted_date = now.strftime("%Y-%m-%d %H:%M:%S")                    
+                    formatted_date = ''
+                    if int(manifest.scanTimes) > 0:
+                        now = datetime.now()
+                        formatted_date = now.strftime("%Y-%m-%d %H:%M:%S")            
+                        
+                    print(formatted_date)    
                     setattr(manifest, 'scanDate', formatted_date)   
 
                 manifest.save()
